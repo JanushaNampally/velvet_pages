@@ -1,0 +1,27 @@
+# --- Your private data (NEVER commit these) ---
+private_storage/
+db.sqlite3
+db.sqlite3-journal
+*.key
+.env
+.env.*
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.pyo
+
+# --- Virtual environment ---
+venv/
+.venv/
+env/
+
+staticfiles/
+media/
+*.log
+
+
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

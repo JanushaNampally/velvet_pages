@@ -1,0 +1,23 @@
+{% extends "app_base.html" %}
+{% block title %}Tags &amp; Categories{% endblock %}
+{% block content %}
+<h1>Tags &amp; Categories</h1>
+<p class="muted">Categories are broad collections; tags describe specific traits of a memory or diary entry.</p>
+<div class="two">
+<section class="card"><h2>Categories</h2>
+<form method="post" class="row">{% csrf_token %}<input type="hidden" name="action" value="add_cat"><input name="name" placeholder="New category" required><button class="btn">Add</button></form>
+{% for c in categories %}<form method="post" class="trow">{% csrf_token %}<input type="hidden" name="id" value="{{ c.pk }}"><input name="name" value="{{ c.name }}">
+<a href="{% url 'memory_list' %}?category={{ c.pk }}" class="small">{{ c.n }} memor{{ c.n|pluralize:"y,ies" }}</a>
+<button name="action" value="rename_cat" class="btn ghost sm">Rename</button><button name="action" value="delete_cat" class="btn danger sm">Delete</button></form>{% endfor %}</section>
+<section class="card"><h2>Reading tags</h2>
+<form method="post" class="row">{% csrf_token %}<input type="hidden" name="action" value="add_tag"><input type="hidden" name="kind" value="reading"><input name="name" placeholder="New tag" required><button class="btn">Add</button></form>
+{% for t in reading_tags %}<form method="post" class="trow">{% csrf_token %}<input type="hidden" name="id" value="{{ t.pk }}"><input name="name" value="{{ t.name }}">
+<a href="{% url 'memory_list' %}?tag={{ t.pk }}" class="small">{{ t.n }}</a>
+<button name="action" value="rename_tag" class="btn ghost sm">Rename</button><button name="action" value="delete_tag" class="btn danger sm">Delete</button></form>{% endfor %}</section>
+</div>
+<section class="card"><h2>Diary tags</h2>
+<form method="post" class="row">{% csrf_token %}<input type="hidden" name="action" value="add_tag"><input type="hidden" name="kind" value="diary"><input name="name" placeholder="New diary tag" required><button class="btn">Add</button></form>
+{% for t in diary_tags %}<form method="post" class="trow">{% csrf_token %}<input type="hidden" name="id" value="{{ t.pk }}"><input name="name" value="{{ t.name }}">
+<a href="{% url 'diary_home' %}?tag={{ t.pk }}" class="small">{{ t.n }}</a>
+<button name="action" value="rename_tag" class="btn ghost sm">Rename</button><button name="action" value="delete_tag" class="btn danger sm">Delete</button></form>{% endfor %}</section>
+{% endblock %}

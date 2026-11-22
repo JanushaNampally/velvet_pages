@@ -1,0 +1,14 @@
+{% extends "app_base.html" %}
+{% block title %}Search{% endblock %}
+{% block content %}
+<h1>Search</h1>
+<form class="searchbar" method="get"><input name="q" value="{{ q }}" placeholder="Search…" autofocus>
+<select name="scope"><option value="all" {% if scope == 'all' %}selected{% endif %}>Everything</option><option value="reading" {% if scope == 'reading' %}selected{% endif %}>Reading only</option><option value="diary" {% if scope == 'diary' %}selected{% endif %}>Diary only</option></select>
+<button class="btn">Search</button></form>
+{% if q %}
+{% if scope != 'diary' %}<h2>Reading Space <span class="muted">({{ reading|length }})</span></h2>
+<div class="masonry">{% for m in reading %}{% include "reading/_card.html" %}{% empty %}<p class="muted">No matches.</p>{% endfor %}</div>{% endif %}
+{% if scope != 'reading' %}<h2>Private Diary <span class="muted">({{ diary|length }})</span></h2>
+<ul class="list">{% for e in diary %}<li><a href="{% url 'entry_detail' e.pk %}">{{ e.entry_date|date:"j M Y" }} — {{ e.title|default:"Untitled entry" }}</a> <span class="muted">{{ e.mood_label }}</span></li>{% empty %}<li class="muted">No matches.</li>{% endfor %}</ul>{% endif %}
+{% endif %}
+{% endblock %}

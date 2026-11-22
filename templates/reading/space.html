@@ -1,0 +1,10 @@
+{% extends "app_base.html" %}
+{% block title %}My Reading Space{% endblock %}
+{% block content %}
+<h1>My Reading Space</h1>
+<div class="stats big"><div><b>{{ memory_count }}</b>memories</div><div><b>{{ book_count }}</b>books</div><div><b>{{ fav_count }}</b>favourites</div></div>
+<div class="row"><a class="btn" href="{% url 'memory_create' %}">+ Save a memory</a><a class="btn alt" href="{% url 'book_create' %}">+ Add a book</a></div>
+{% if favourites %}<h2>Favourite moments</h2><div class="masonry">{% for m in favourites %}{% include "reading/_card.html" %}{% endfor %}</div>{% endif %}
+<h2>Recently saved</h2><div class="masonry">{% for m in recent %}{% include "reading/_card.html" %}{% empty %}<p class="muted">Nothing here yet — save your first memory.</p>{% endfor %}</div>
+<h2>Recent books</h2><ul class="list">{% for b in recent_books %}<li><a href="{% url 'book_detail' b.pk %}">{{ b.title }}</a> <span class="muted">{{ b.author }} · {{ b.get_status_display }}</span></li>{% empty %}<li class="muted">No books yet.</li>{% endfor %}</ul>
+{% endblock %}

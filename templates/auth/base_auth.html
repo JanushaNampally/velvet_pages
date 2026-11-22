@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block page %}
+<main class="auth">
+  <div class="auth-card">
+    <div class="brand big">Velvet Pages</div>
+    <p class="tag">a private library of your own</p>
+    {% for m in messages %}<div class="msg {{ m.tags }}">{{ m }}</div>{% endfor %}
+    {% block auth %}{% endblock %}
+  </div>
+</main>
+{% endblock %}

@@ -1,0 +1,9 @@
+{% extends "auth/base_auth.html" %}
+{% block auth %}
+<p class="muted">We’ll text a code to your registered phone so you can set a new password.</p>
+<form method="post">{% csrf_token %}
+  {{ form.non_field_errors }}{{ form.as_div }}
+  <button class="btn wide">Send code</button>
+</form>
+<p class="muted small"><a href="{% url 'login' %}">Back to login</a></p>
+{% endblock %}

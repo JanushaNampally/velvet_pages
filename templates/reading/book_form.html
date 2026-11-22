@@ -1,0 +1,6 @@
+{% extends "app_base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<h1>{{ title }}</h1>
+<form method="post" class="card narrow">{% csrf_token %}{{ form.as_div }}<div class="row"><button class="btn">Save</button><a class="btn ghost" href="{% url 'book_list' %}">Cancel</a></div></form>
+{% endblock %}

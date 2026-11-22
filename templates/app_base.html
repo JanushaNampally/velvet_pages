@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block page %}
+{% with u=request.resolver_match.url_name %}
+<div class="shell">
+  <nav class="side">
+    <div class="brand">Velvet Pages</div>
+    <a href="{% url 'dashboard' %}" class="{% if u == 'dashboard' %}on{% endif %}">Dashboard</a>
+    <div class="grp">Reading</div>
+    <a href="{% url 'reading_space' %}" class="{% if u == 'reading_space' %}on{% endif %}">My Reading Space</a>
+    <a href="{% url 'book_list' %}" class="{% if 'book' in u %}on{% endif %}">My Books</a>
+    <a href="{% url 'memory_list' %}" class="{% if u == 'memory_list' or u == 'memory_detail' or u == 'memory_create' or u == 'memory_edit' %}on{% endif %}">My Memories</a>
+    <a href="{% url 'favourites' %}" class="{% if u == 'favourites' %}on{% endif %}">Favourites</a>
+    <div class="grp">Diary</div>
+    <a href="{% url 'diary_home' %}" class="{% if u == 'diary_home' or 'entry' in u %}on{% endif %}">My Private Diary</a>
+    <a href="{% url 'calendar' %}" class="{% if u == 'calendar' %}on{% endif %}">Calendar</a>
+    <div class="grp">Library</div>
+    <a href="{% url 'taxonomy' %}" class="{% if u == 'taxonomy' %}on{% endif %}">Tags &amp; Categories</a>
+    <a href="{% url 'search' %}" class="{% if u == 'search' %}on{% endif %}">Search</a>
+    <a href="{% url 'settings' %}" class="{% if u == 'settings' %}on{% endif %}">Settings</a>
+    <a href="{% url 'backup_home' %}" class="{% if 'backup' in u %}on{% endif %}">Backup &amp; Export</a>
+    <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="linkish">Logout</button></form>
+  </nav>
+  <main class="main">
+    {% for m in messages %}<div class="msg {{ m.tags }}">{{ m }}</div>{% endfor %}
+    {% block content %}{% endblock %}
+  </main>
+</div>
+{% endwith %}
+{% endblock %}

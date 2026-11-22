@@ -1,0 +1,12 @@
+{% extends "app_base.html" %}
+{% block title %}{{ book.title }}{% endblock %}
+{% block content %}
+<div class="head"><h1>{{ book.title }}</h1><div class="row"><a class="btn" href="{% url 'memory_create' %}?book={{ book.pk }}">+ Memory</a><a class="btn ghost" href="{% url 'book_edit' book.pk %}">Edit</a><a class="btn danger" href="{% url 'book_delete' book.pk %}">Delete</a></div></div>
+<p class="muted">{{ book.author }}{% if book.genre %} · {{ book.genre }}{% endif %} · {{ book.get_status_display }}{% if book.rating %} · {{ book.rating }}/5{% endif %}
+{% if book.started_at %} · started {{ book.started_at }}{% endif %}{% if book.completed_at %} · finished {{ book.completed_at }}{% endif %}</p>
+{% if book.original_url %}<p><a href="{{ book.original_url }}" target="_blank" rel="noopener noreferrer">Original book link ↗</a></p>{% endif %}
+{% if book.description %}<p>{{ book.description|linebreaksbr }}</p>{% endif %}
+{% if book.personal_review %}<h3>My review</h3><div class="prose">{{ book.personal_review|linebreaks }}</div>{% endif %}
+<h2>Memories ({{ memories|length }})</h2><div class="masonry">{% for m in memories %}{% include "reading/_card.html" %}{% empty %}<p class="muted">None yet.</p>{% endfor %}</div>
+<h2>Related diary entries</h2><ul class="list">{% for e in entries %}<li><a href="{% url 'entry_detail' e.pk %}">{{ e.entry_date|date:"j M Y" }} — {{ e.title }}</a></li>{% empty %}<li class="muted">None. (Link an entry to this book when writing it.)</li>{% endfor %}</ul>
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends "app_base.html" %}
+{% block title %}My Books{% endblock %}
+{% block content %}
+<div class="head"><h1>My Books</h1><a class="btn" href="{% url 'book_create' %}">+ Add a book</a></div>
+<form method="get" class="filters"><input name="q" value="{{ f.q }}" placeholder="Title, author, genre…">
+<select name="status"><option value="">Any status</option>{% for v,l in statuses %}<option value="{{ v }}" {% if f.status == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select><button class="btn">Filter</button></form>
+<table><tr><th>Title</th><th>Author</th><th>Status</th><th>Rating</th><th>Memories</th></tr>
+{% for b in books %}<tr><td><a href="{% url 'book_detail' b.pk %}">{{ b.title }}</a></td><td>{{ b.author }}</td><td>{{ b.get_status_display }}</td><td>{% if b.rating %}{{ b.rating }}/5{% endif %}</td><td>{{ b.n }}</td></tr>
+{% empty %}<tr><td colspan="5" class="muted">No books yet.</td></tr>{% endfor %}</table>
+{% endblock %}

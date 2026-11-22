@@ -1,0 +1,5 @@
+Django>=5.1,<7
+cryptography>=42
+Pillow>=10
+# Only needed if you set VELVET_DB=postgres:
+# psycopg[binary]>=3.1

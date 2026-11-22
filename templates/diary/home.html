@@ -1,0 +1,15 @@
+{% extends "app_base.html" %}
+{% block title %}My Private Diary{% endblock %}
+{% block content %}
+<div class="head"><h1>My Private Diary <span class="muted small">({{ total }})</span></h1><div class="row"><a class="btn" href="{% url 'entry_create' %}">✎ Write</a><a class="btn alt" href="{% url 'calendar' %}">Calendar</a></div></div>
+<form method="get" class="filters"><input name="q" value="{{ f.q }}" placeholder="Search title, text, tags, mood, date…">
+<input type="date" name="date" value="{{ f.date }}">
+<select name="mood"><option value="">Any mood</option>{% for v,l in moods %}<option value="{{ v }}" {% if f.mood == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+<select name="tag"><option value="">Any tag</option>{% for t in tags %}<option value="{{ t.pk }}" {% if f.tag == t.pk|stringformat:"s" %}selected{% endif %}>{{ t.name }}</option>{% endfor %}</select>
+<label class="check"><input type="checkbox" name="fav" value="1" {% if f.fav == "1" %}checked{% endif %}> Favourites</label><button class="btn">Filter</button></form>
+<ul class="list entries">{% for e in page %}<li><a href="{% url 'entry_detail' e.pk %}"><span class="date">{{ e.entry_date|date:"j M Y" }}</span> {% if e.favourite %}<span class="heart">♥</span> {% endif %}<b>{{ e.title|default:"Untitled entry" }}</b></a>
+<span class="muted small">{{ e.mood_label }} {% for t in e.tags.all %}<span class="chip">{{ t.name }}</span>{% endfor %}</span>
+{% if previews %}<p class="muted">{{ e.content|truncatechars:160 }}</p>{% endif %}</li>
+{% empty %}<li class="muted">No entries found.</li>{% endfor %}</ul>
+{% if page.has_other_pages %}<div class="pager">{% if page.has_previous %}<a href="?{{ qs }}&page={{ page.previous_page_number }}">← Newer</a>{% endif %} Page {{ page.number }} of {{ page.paginator.num_pages }} {% if page.has_next %}<a href="?{{ qs }}&page={{ page.next_page_number }}">Older →</a>{% endif %}</div>{% endif %}
+{% endblock %}

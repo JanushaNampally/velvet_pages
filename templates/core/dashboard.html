@@ -1,0 +1,35 @@
+{% extends "app_base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<header class="hero">
+  <h1>Welcome back, {{ user.display_name }}.</h1>
+  <p class="muted">{{ today|date:"l, j F Y" }}</p>
+  <form action="{% url 'search' %}" class="searchbar"><input name="q" placeholder="Search dialogues, books, diary…"><button class="btn">Search</button></form>
+  <div class="row"><a class="btn" href="{% url 'memory_create' %}">+ Save a memory</a><a class="btn alt" href="{% url 'entry_create' %}">✎ Write in diary</a></div>
+</header>
+<div class="two">
+  <section class="card">
+    <h2>My Reading Space</h2>
+    <div class="stats"><div><b>{{ memory_count }}</b>memories</div><div><b>{{ book_count }}</b>books</div><div><b>{{ fav_count }}</b>favourites</div></div>
+    <h3>Recently saved</h3>
+    <div class="thumbs">{% for m in recent_memories %}<a href="{% url 'memory_detail' m.pk %}" title="{{ m.book.title|default:'Memory' }}">
+      {% with img=m.images.all.0 %}{% if img %}<img src="{% url 'memory_image' img.pk %}?thumb=1" alt="">{% else %}<span class="noimg">“</span>{% endif %}{% endwith %}</a>
+    {% empty %}<p class="muted">Nothing saved yet.</p>{% endfor %}</div>
+    {% if favourites %}<h3>Favourite moments</h3>{% for m in favourites %}<blockquote class="mini">{{ m.dialogue|default:m.thoughts|truncatechars:110 }}<cite>{{ m.book.title }}</cite></blockquote>{% endfor %}{% endif %}
+    <div class="row"><a href="{% url 'reading_space' %}">Open reading space →</a></div>
+  </section>
+  <section class="card">
+    <h2>My Private Diary</h2>
+    <div class="stats"><div><b>{{ diary_count }}</b>entries</div><div><b>{{ last_entry|date:"j M Y"|default:"—" }}</b>latest entry</div></div>
+    <h3>Recent entry dates</h3>
+    <ul class="plain">{% for r in recent_dates %}<li>{{ r.entry_date|date:"D, j M Y" }} <span class="muted">· {{ r.c }} entr{{ r.c|pluralize:"y,ies" }}</span></li>{% empty %}<li class="muted">No entries yet.</li>{% endfor %}</ul>
+    <p class="muted small">Diary content is never shown on the dashboard.</p>
+    <div class="row"><a href="{% url 'calendar' %}">Calendar</a><a href="{% url 'diary_home' %}">Open diary →</a></div>
+  </section>
+</div>
+<section class="card {% if backup_stale %}warn{% endif %}">
+  <h2>Backup status</h2>
+  {% if last_backup %}<p>Last verified backup: {{ last_backup.created_at|date:"j M Y, H:i" }} ({{ last_backup.size|filesizeformat }}).</p>{% else %}<p>No verified backup yet.</p>{% endif %}
+  {% if backup_stale %}<p>It’s been a while. <a href="{% url 'backup_home' %}">Create a backup now →</a></p>{% endif %}
+</section>
+{% endblock %}

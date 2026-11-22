@@ -1,0 +1,8 @@
+{% extends "auth/base_auth.html" %}
+{% block auth %}
+<form method="post">{% csrf_token %}
+  {{ form.non_field_errors }}{{ form.as_div }}
+  <button class="btn wide">Log in</button>
+</form>
+<p class="muted small"><a href="{% url 'forgot' %}">Forgot password?</a></p>
+{% endblock %}

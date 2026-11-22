@@ -1,0 +1,12 @@
+{% extends "app_base.html" %}
+{% block title %}Diary entry{% endblock %}
+{% block content %}
+<div class="head"><div><div class="muted">{{ e.entry_date|date:"l, j F Y" }}{% if e.mood_label %} · feeling {{ e.mood_label|lower }}{% endif %}</div>
+<h1>{{ e.title|default:"Untitled entry" }}</h1></div>
+<div class="row"><form method="post" action="{% url 'entry_favourite' e.pk %}">{% csrf_token %}<button class="btn ghost">{% if e.favourite %}♥ Favourite{% else %}♡ Favourite{% endif %}</button></form>
+<a class="btn ghost" href="{% url 'entry_edit' e.pk %}">Edit</a><a class="btn danger" href="{% url 'entry_delete' e.pk %}">Delete</a></div></div>
+<article class="page">{{ e.content|linebreaks }}</article>
+<p class="muted small">{{ e.words }} words · {{ e.chars }} characters · written {{ e.created_at|date:"j M Y, H:i" }}{% if e.updated_at|date:"U" != e.created_at|date:"U" %} · edited {{ e.updated_at|date:"j M Y, H:i" }}{% endif %}</p>
+<div class="chips">{% for t in e.tags.all %}<a class="chip" href="{% url 'diary_home' %}?tag={{ t.pk }}">{{ t.name }}</a>{% endfor %}</div>
+{% if e.book %}<p class="muted">Related book: <a href="{% url 'book_detail' e.book.pk %}">{{ e.book.title }}</a></p>{% endif %}
+{% endblock %}

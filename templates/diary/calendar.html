@@ -1,0 +1,9 @@
+{% extends "app_base.html" %}
+{% block title %}Calendar{% endblock %}
+{% block content %}
+<div class="head"><h1>{{ month_name }} {{ year }}</h1><div class="row"><a class="btn ghost" href="{{ prev }}">← Prev</a><a class="btn ghost" href="{% url 'calendar' %}">Today</a><a class="btn ghost" href="{{ next }}">Next →</a></div></div>
+<p class="muted">{{ total }} entr{{ total|pluralize:"y,ies" }} this month. Click a highlighted day to read it; “+” starts a new entry for that day.</p>
+<table class="cal"><tr>{% for d in weekdays %}<th>{{ d }}</th>{% endfor %}</tr>
+{% for week in weeks %}<tr>{% for c in week %}<td class="{% if c.count %}has{% endif %} {% if c.today %}today{% endif %}">
+{% if c.day %}<a class="dn" href="{% url 'diary_home' %}?date={{ c.iso }}">{{ c.day }}</a>{% if c.count %}<span class="cnt">{{ c.count }}</span>{% endif %}<a class="plus" href="{% url 'entry_create' %}?date={{ c.iso }}" title="New entry">+</a>{% endif %}</td>{% endfor %}</tr>{% endfor %}</table>
+{% endblock %}

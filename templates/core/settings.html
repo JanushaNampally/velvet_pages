@@ -1,0 +1,16 @@
+{% extends "app_base.html" %}
+{% block title %}Settings{% endblock %}
+{% block content %}
+<h1>Settings</h1>
+<section class="card narrow"><h2>Account</h2><p>{{ user.display_name }}<br>Email: <b>{{ user.email }}</b><br>Phone: <b>{{ user.phone }}</b></p></section>
+<section class="card narrow"><h2>Diary</h2>
+<form method="post">{% csrf_token %}<input type="hidden" name="action" value="prefs">
+<label class="check"><input type="checkbox" name="diary_previews" {% if user.diary_previews %}checked{% endif %}> Show short previews of diary entries in the diary list</label>
+<button class="btn">Save</button></form></section>
+<section class="card narrow"><h2>Change password</h2>
+<form method="post">{% csrf_token %}<input type="hidden" name="action" value="password">
+<label>Current password<input type="password" name="current" required></label>
+<label>New password (8+ characters)<input type="password" name="new" required minlength="8"></label>
+<label>Confirm new password<input type="password" name="confirm" required></label>
+<button class="btn">Change password</button></form></section>
+{% endblock %}

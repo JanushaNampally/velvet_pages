@@ -1,0 +1,12 @@
+{% extends "app_base.html" %}
+{% block title %}Confirm delete{% endblock %}
+{% block content %}
+<h1>Delete?</h1>
+<form method="post" class="card narrow">{% csrf_token %}
+  <p>You are about to permanently delete {{ what }}. This cannot be undone.</p>
+  {% if note %}<p class="muted">{{ note }}</p>{% endif %}
+  {% if extra_checkbox %}<label class="check"><input type="checkbox" name="delete_memories"> {{ extra_checkbox }}</label>{% endif %}
+  <div class="row"><button class="btn danger">Yes, delete</button>
+  <a class="btn ghost" href="{% url back back_pk %}">Cancel</a></div>
+</form>
+{% endblock %}

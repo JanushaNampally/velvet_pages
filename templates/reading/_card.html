@@ -1,0 +1,11 @@
+<article class="mcard">
+  <a href="{% url 'memory_detail' m.pk %}">
+    {% with img=m.images.all.0 %}{% if img %}<img src="{% url 'memory_image' img.pk %}?thumb=1" alt="Screenshot" loading="lazy">{% endif %}{% endwith %}
+    <div class="mbody">
+      <div class="mtitle">{% if m.favourite %}<span class="heart">♥</span> {% endif %}{{ m.book.title|default:"Untitled memory" }}</div>
+      {% if m.dialogue or m.thoughts %}<p>{{ m.dialogue|default:m.thoughts|truncatechars:140 }}</p>{% endif %}
+      <div class="chips">{% for t in m.tags.all %}<span class="chip">{{ t.name }}</span>{% endfor %}</div>
+      <div class="muted small">{{ m.created_at|date:"j M Y" }}</div>
+    </div>
+  </a>
+</article>

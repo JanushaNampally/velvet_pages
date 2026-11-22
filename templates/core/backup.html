@@ -1,0 +1,70 @@
+"""Backups, verification, restore and exports.
+
+Private content inside archives is already AES-256-GCM ciphertext (diary, dialogues,
+thoughts, screenshots). Book titles/authors, tag names and dates are stored as plain
+metadata so the archive stays organised and searchable offline.
+
+To read an archive on another computer you also need private_storage/data.key.
+"""
+import hashlib
+import io
+import json
+import re
+import zipfile
+from datetime import datetime
+from pathlib import Path
+
+from django.conf import settings
+from django.core import serializers
+from django.core.management.color import no_style
+from django.db import connection, transaction
+from django.utils import timezone
+
+from diary.models import MOOD_LABELS, DiaryEntry
+from reading.files import read_image, screenshots_root
+from reading.models import Book, Category, Memory, MemoryImage, Tag
+
+from .crypto import dec_text_safe
+from .models import Backup
+
+FILE_RE = re.compile(r"^[0-9a-f]{32}(\.thumb)?\.bin$")
+RESTORE_ORDER = ["tags/tags.json", "tags/categories.json", "books/book_metadata.json",
+                 "memories/memory_metadata.json", "memories/image_metadata.json", "diary/diary_metadata.json"]
+
+
+def backup_dir() -> Path:
+    p = Path(settings.PRIVATE_STORAGE_ROOT) / "backups"
+    p.mkdir(parents=True, exist_ok=True)
+    return p
+
+
+def _ser(qs):
+    return serializers.serialize("json", qs, indent=1).encode()
+
+
+class _Writer:
+    def __init__(self, z):
+        self.z, self.files = z, {}
+
+    def add(self, name, data: bytes):
+        self.z.writestr(name, data)
+        self.files[name] = {"sha256": hashlib.sha256(data).hexdigest(), "size": len(data)}
+
+
+def build_archive(owner, dest: Path):
+    with zipfile.ZipFile(dest, "w", zipfile.ZIP_DEFLATED) as z:
+        w = _Writer(z)
+        images = list(MemoryImage.objects.all())
+        entries = list(DiaryEntry.objects.all())
+        w.add("books/book_metadata.json", _ser(Book.objects.all()))
+        w.add("memories/memory_metadata.json", _ser(Memory.objects.all()))
+        w.add("memories/image_metadata.json", _ser(images))
+        for img in images:
+            for suffix in (".bin", ".thumb.bin"):
+                p = screenshots_root() / f"{img.storage_key}{suffix}"
+                if p.exists():
+                    w.add(f"memories/screenshots/{img.storage_key}{suffix}", p.read_bytes())
+        w.add("diary/diary_metadata.json", _ser(entries))
+        for e in entries:
+            w.add(f"diary/encrypted_entries/{e.pk}.bin", bytes(e.content_enc))
+        w.add("tags/tags.json", _ser(Tag.objects.all()))

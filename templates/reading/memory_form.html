@@ -1,0 +1,12 @@
+{% extends "app_base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<h1>{{ title }}</h1>
+{% if images %}<div class="card narrow"><h3>Current screenshots</h3><div class="thumbs">{% for img in images %}
+<form method="post" action="{% url 'memory_image_delete' img.pk %}">{% csrf_token %}<img src="{% url 'memory_image' img.pk %}?thumb=1" alt=""><button class="linkish">Remove</button></form>{% endfor %}</div>
+<p class="muted small">To replace a screenshot, remove it and upload a new one below.</p></div>{% endif %}
+<form method="post" enctype="multipart/form-data" class="card narrow">{% csrf_token %}
+  {{ form.as_div }}
+  <div class="row"><button class="btn">Save</button><a class="btn ghost" href="{% if memory %}{% url 'memory_detail' memory.pk %}{% else %}{% url 'memory_list' %}{% endif %}">Cancel</a></div>
+</form>
+{% endblock %}
