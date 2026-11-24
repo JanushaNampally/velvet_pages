@@ -19,8 +19,8 @@ def _date(s):
         return None
 
 
-def filtered_memories(params, key, force_fav=False):
-    qs = Memory.objects.select_related("book", "category").prefetch_related("tags", "images")
+def filtered_memories(owner, params, key, force_fav=False):
+    qs = Memory.objects.filter(owner=owner).select_related("book", "category").prefetch_related("tags", "images")
     for field, lookup in (("book", "book_id"), ("tag", "tags__id"), ("category", "category_id")):
         v = params.get(field, "")
         if v.isdigit():

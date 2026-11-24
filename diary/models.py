@@ -9,6 +9,8 @@ MOODS = [("happy", "Happy"), ("sad", "Sad"), ("angry", "Angry"), ("anxious", "An
          ("grateful", "Grateful"), ("lonely", "Lonely"), ("overwhelmed", "Overwhelmed"),
          ("motivated", "Motivated"), ("neutral", "Neutral")]
 MOOD_LABELS = dict(MOODS)
+MOOD_EMOJI = {"happy": "😊", "sad": "😢", "angry": "😠", "anxious": "😰", "excited": "🤩", "peaceful": "😌",
+              "confused": "😕", "grateful": "🙏", "lonely": "🥀", "overwhelmed": "😵", "motivated": "💪", "neutral": "😐"}
 
 
 class DiaryEntry(models.Model):

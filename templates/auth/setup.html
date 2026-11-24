@@ -1,8 +1,9 @@
 {% extends "auth/base_auth.html" %}
 {% block auth %}
-<p class="muted">First-time setup. Create your account — this page disappears once you’re registered.</p>
-<form method="post">{% csrf_token %}
-  {{ form.non_field_errors }}{{ form.as_div }}
-  <button class="btn wide">Create my Velvet Pages</button>
-</form>
+<p class="muted">Create your account. First we’ll verify you with Google, then you choose a username and password. This page closes once you’re registered.</p>
+{% if google_ready %}
+<a class="btn wide" href="{% url 'google_start' %}?mode=register">Continue with Google</a>
+{% else %}
+<div class="msg warning">Google sign-in isn’t configured yet. Set <code>GOOGLE_CLIENT_ID</code> and <code>GOOGLE_CLIENT_SECRET</code>, then restart the server.</div>
+{% endif %}
 {% endblock %}

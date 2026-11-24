@@ -4,9 +4,11 @@
 <h1>{{ title }}</h1>
 <form method="post" class="card editor-card">{% csrf_token %}
   {{ form.non_field_errors }}
-  <div class="grid3">{{ form.title.as_field_group }}{{ form.entry_date.as_field_group }}{{ form.mood.as_field_group }}</div>
+  <div class="grid3">{{ form.title.as_field_group }}{{ form.entry_date.as_field_group }}{{ form.book.as_field_group }}</div>
+  {{ form.mood.as_field_group }}
   {{ form.content.errors }}{{ form.content }}
-  <div class="grid3">{{ form.tags.as_field_group }}{{ form.book.as_field_group }}{{ form.favourite.as_field_group }}</div>
+  {{ form.tag_choices.as_field_group }}{{ form.tags.as_field_group }}
+  {{ form.favourite.as_field_group }}
   <div class="row"><button class="btn">Save entry</button><a class="btn ghost" href="{% if entry %}{% url 'entry_detail' entry.pk %}{% else %}{% url 'diary_home' %}{% endif %}">Cancel</a></div>
 </form>
 {% endblock %}

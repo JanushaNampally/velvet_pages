@@ -80,8 +80,8 @@ CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"
 SESSION_COOKIE_AGE = 12 * 3600          # hard session expiry
 SESSION_SAVE_EVERY_REQUEST = True
 SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SAMESITE = "Strict"
-CSRF_COOKIE_SAMESITE = "Strict"
+SESSION_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_SAMESITE = "Lax"
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 if not DEBUG:
@@ -102,17 +102,14 @@ MAX_UPLOAD_BYTES = 15 * 1024 * 1024
 FILE_UPLOAD_MAX_MEMORY_SIZE = MAX_UPLOAD_BYTES
 DATA_UPLOAD_MAX_MEMORY_SIZE = 64 * 1024 * 1024
 DATA_UPLOAD_MAX_NUMBER_FILES = 20
+# One-time registration protection (optional): if set, the registration form asks for it.
+SETUP_TOKEN = env("VELVET_SETUP_TOKEN")
 
-# OTP login
-OTP_BACKEND = env("VELVET_OTP_BACKEND", "console")   # "console" (dev) or "twilio"
-OTP_TTL_SECONDS = 300
-REQUIRE_OTP = env("VELVET_REQUIRE_OTP", "1") == "1"   # set 0 to log in with password only
-OTP_MAX_ATTEMPTS = 5
-OTP_MAX_REQUESTS_PER_HOUR = 5
-DEFAULT_COUNTRY_CODE = env("VELVET_COUNTRY_CODE", "+91")
-TWILIO_ACCOUNT_SID = env("TWILIO_ACCOUNT_SID")
-TWILIO_AUTH_TOKEN = env("TWILIO_AUTH_TOKEN")
-TWILIO_FROM = env("TWILIO_FROM")
+# Google sign-in (create these in Google Cloud Console; never hard-code the secret)
+GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = env("GOOGLE_CLIENT_SECRET")
+GOOGLE_REDIRECT_URI = env("GOOGLE_REDIRECT_URI", "http://127.0.0.1:8000/auth/google/callback/")
+
 
 TIME_ZONE = env("VELVET_TZ", "Asia/Kolkata")
 USE_TZ = True

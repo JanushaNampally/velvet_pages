@@ -9,4 +9,6 @@ urlpatterns = [
     path("diary/<int:pk>/delete/", v.entry_delete, name="entry_delete"),
     path("diary/<int:pk>/favourite/", v.entry_favourite, name="entry_favourite"),
     path("calendar/", v.calendar_view, name="calendar"),
+    path("diary/quick/", v.quick_entry, name="quick_entry"),
+
 ]

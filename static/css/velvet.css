@@ -67,3 +67,25 @@ ul.list,ul.plain{list-style:none;padding:0}ul.list li{padding:.55rem 0;border-bo
 .tag{text-align:center;color:var(--muted);font-style:italic;margin:-.4rem 0 1.2rem;font-family:var(--serif)}
 hr{border:0;border-top:1px solid var(--line);margin:1.2rem 0}
 @media(max-width:820px){.shell{flex-direction:column}.side{width:100%;height:auto;position:static;display:flex;flex-wrap:wrap;gap:.2rem;padding:.8rem}.side .brand{width:100%;margin:0 0 .3rem}.grp{display:none}.side a{padding:.35rem .6rem;font-size:.9rem}.main{padding:1.2rem 1rem}.cal td{height:64px}}
+a.btn.wide{display:block;text-align:center}
+.or{display:flex;align-items:center;gap:.8rem;color:var(--muted);margin:1rem 0}
+.or:before,.or:after{content:"";flex:1;border-top:1px solid var(--line)}
+
+/* ---- interactivity (pure CSS) ---- */
+.side-search{margin:.2rem 0 .8rem}.side-search input{padding:.45rem .7rem;font-size:.9rem}
+.msg.success,.msg.info{animation:fadeout .6s ease 6s forwards}
+@keyframes fadeout{to{opacity:0;max-height:0;padding:0;margin:0;border-width:0;overflow:hidden}}
+.mcard{position:relative}.heartform{position:absolute;top:.5rem;right:.5rem;z-index:2;margin:0}
+.heartbtn{background:#0b0a0bcc;border:1px solid var(--line);color:var(--wine);font-size:1.15rem;line-height:1;width:2.1rem;height:2.1rem;border-radius:50%;cursor:pointer;transition:.15s}
+.heartbtn:hover{transform:scale(1.15);border-color:var(--wine);color:#e0607a}
+.shots img{cursor:zoom-in;transition:.15s}.shots img:hover{border-color:var(--wine)}
+.lightbox{display:none;position:fixed;inset:0;z-index:50;place-items:center;background:#000000ee}
+.lightbox:target{display:grid}.lightbox img{position:relative;max-width:94vw;max-height:88vh;border-radius:8px;z-index:1}
+.lb-bg{position:absolute;inset:0;cursor:zoom-out}.lb-close{position:fixed;top:1rem;right:1.2rem;z-index:2;color:#fff;font-size:1.1rem}
+#id_mood,#id_tag_choices{display:flex;flex-wrap:wrap;gap:.45rem}
+#id_mood>div,#id_tag_choices>div{margin:0}
+#id_mood label,#id_tag_choices label{position:relative;display:inline-flex;align-items:center;margin:0;padding:.3rem .85rem;border:1px solid var(--line);border-radius:999px;cursor:pointer;color:var(--text);background:var(--bg3);transition:.12s}
+#id_mood label:hover,#id_tag_choices label:hover{border-color:var(--wine)}
+#id_mood input,#id_tag_choices input{position:absolute;opacity:0;pointer-events:none}
+#id_mood label:has(input:checked),#id_tag_choices label:has(input:checked){background:var(--burg);border-color:var(--wine)}
+#id_mood label:has(input:focus-visible),#id_tag_choices label:has(input:focus-visible){outline:2px solid var(--gold)}

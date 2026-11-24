@@ -51,6 +51,7 @@ def search(request):
 
 def settings_view(request):
     owner = request.user
+    via_google = request.session.get("auth_via") == "google"
     if request.method == "POST":
         action = request.POST.get("action")
         if action == "prefs":
@@ -59,7 +60,7 @@ def settings_view(request):
             messages.success(request, "Saved.")
         elif action == "password":
             cur, new, conf = (request.POST.get(k, "") for k in ("current", "new", "confirm"))
-            if not owner.check_password(cur):
+            if not via_google and not owner.check_password(cur):
                 messages.error(request, "Current password is incorrect.")
             elif len(new) < 8 or new != conf:
                 messages.error(request, "New password must match and be at least 8 characters.")
@@ -69,9 +70,7 @@ def settings_view(request):
                 update_session_auth_hash(request, owner)   # keeps you logged in
                 messages.success(request, "Password changed.")
         return redirect("settings")
-    return render(request, "core/settings.html")
-
-
+    return render(request, "core/settings.html", {"via_google": via_google})
 # ------------------------------------------------------------------ backups
 def backup_home(request):
     return render(request, "core/backup.html", {"backups": Backup.objects.all()[:30]})

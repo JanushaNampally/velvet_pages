@@ -9,7 +9,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
 from core.crypto import dec_text_safe, enc_text, vault_key
-from reading.forms import parse_tags
+from reading.forms import parse_tags, pick_tags
 from reading.models import Tag
 
 from .forms import EntryForm
@@ -67,7 +67,7 @@ def _save(request, form, entry=None):
     entry.mood_enc = enc_text(key, d["mood"])
     entry.entry_date, entry.favourite, entry.book = d["entry_date"], d["favourite"], d["book"]
     entry.save()
-    entry.tags.set(parse_tags(d["tags"], "diary"))
+    entry.tags.set(pick_tags(request.user, "diary", d["tag_choices"], d["tags"]))
     return entry
 
 
@@ -83,13 +83,24 @@ def entry_create(request):
         return redirect("entry_detail", pk=e.pk)
     return render(request, "diary/entry_form.html", {"form": form, "title": "New entry"})
 
+@require_POST
+def quick_entry(request):
+    """One-box note from the dashboard: saved straight into today's diary."""
+    text = request.POST.get("content", "").strip()
+    if text:
+        DiaryEntry.objects.create(owner=request.user, content_enc=enc_text(vault_key(request), text),
+                                  entry_date=date.today())
+        messages.success(request, "Saved to today's diary.")
+    else:
+        messages.error(request, "Write something first.")
+    return redirect("dashboard")
 
 def entry_edit(request, pk):
     e = get_object_or_404(DiaryEntry, pk=pk)
     key = vault_key(request)
     initial = {"title": dec_text_safe(key, e.title_enc), "content": dec_text_safe(key, e.content_enc),
                "mood": dec_text_safe(key, e.mood_enc), "entry_date": e.entry_date, "book": e.book_id,
-               "favourite": e.favourite, "tags": ", ".join(t.name for t in e.tags.all())}
+                              "favourite": e.favourite, "tag_choices": [str(t.pk) for t in e.tags.all()]}
     form = EntryForm(request.POST or None, initial=initial)
     if request.method == "POST" and form.is_valid():
         _save(request, form, entry=e)

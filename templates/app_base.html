@@ -4,6 +4,7 @@
 <div class="shell">
   <nav class="side">
     <div class="brand">Velvet Pages</div>
+        <form action="{% url 'search' %}" class="side-search"><input name="q" placeholder="Search everything…" accesskey="/" aria-label="Search"></form>
     <a href="{% url 'dashboard' %}" class="{% if u == 'dashboard' %}on{% endif %}">Dashboard</a>
     <div class="grp">Reading</div>
     <a href="{% url 'reading_space' %}" class="{% if u == 'reading_space' %}on{% endif %}">My Reading Space</a>

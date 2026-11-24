@@ -6,9 +6,9 @@
 <form method="post" action="{% url 'memory_favourite' m.pk %}">{% csrf_token %}<button class="btn ghost">{% if m.favourite %}♥ Favourited{% else %}♡ Favourite{% endif %}</button></form>
 <a class="btn ghost" href="{% url 'memory_edit' m.pk %}">Edit</a><a class="btn danger" href="{% url 'memory_delete' m.pk %}">Delete</a></div></div>
 <p class="muted">{% if m.book.author %}by {{ m.book.author }} · {% endif %}{% if m.category %}{{ m.category.name }} · {% endif %}saved {{ m.created_at|date:"j M Y" }}</p>
-<div class="shots">{% for img in m.images.all %}<figure><a href="{% url 'memory_image' img.pk %}" target="_blank"><img src="{% url 'memory_image' img.pk %}" alt="Screenshot"></a><figcaption><a href="{% url 'memory_image' img.pk %}?download=1">Download</a></figcaption></figure>{% endfor %}</div>
-{% if m.dialogue %}<h3>Dialogue</h3><blockquote>{{ m.dialogue|linebreaksbr }}</blockquote>{% endif %}
-{% if m.thoughts %}<h3>My thoughts</h3><div class="prose">{{ m.thoughts|linebreaks }}</div>{% endif %}
-<div class="chips">{% for t in m.tags.all %}<a class="chip" href="{% url 'memory_list' %}?tag={{ t.pk }}">{{ t.name }}</a>{% endfor %}</div>
-{% if link %}<p><a class="btn alt" href="{{ link }}" target="_blank" rel="noopener noreferrer">Open original book link ↗</a></p>{% endif %}
+<div class="shots">{% for img in m.images.all %}<figure><a href="#shot{{ img.pk }}" title="Click to enlarge"><img src="{% url 'memory_image' img.pk %}" alt="Screenshot"></a><figcaption><a href="{% url 'memory_image' img.pk %}?download=1">Download</a></figcaption></figure>
+<div class="lightbox" id="shot{{ img.pk }}"><a class="lb-bg" href="#!" aria-label="Close"></a><img src="{% url 'memory_image' img.pk %}" alt="Screenshot"><a class="lb-close" href="#!">✕ Close</a></div>{% endfor %}</div>
+{% if m.dialogue %}<div class="card narrow"><h2>Dialogue</h2><p>{{ m.dialogue|linebreaksbr }}</p></div>{% endif %}
+{% if m.thoughts %}<div class="card narrow"><h2>Thoughts</h2><p>{{ m.thoughts|linebreaksbr }}</p></div>{% endif %}
+{% if m.tags.exists %}<div class="card narrow"><h2>Tags</h2><div class="chips">{% for t in m.tags.all %}<span class="chip">{{ t.name }}</span>{% endfor %}</div></div>{% endif %}
 {% endblock %}

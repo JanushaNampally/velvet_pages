@@ -1,14 +1,18 @@
+from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+
+OWNER = settings.AUTH_USER_MODEL
 
 
 class Tag(models.Model):
     KINDS = [("reading", "Reading"), ("diary", "Diary")]
+    owner = models.ForeignKey(OWNER, on_delete=models.CASCADE, related_name="+")
     name = models.CharField(max_length=60)
     kind = models.CharField(max_length=10, choices=KINDS, default="reading")
 
     class Meta:
-        unique_together = ("name", "kind")
+        unique_together = ("owner", "name", "kind")
         ordering = ["name"]
 
     def __str__(self):
@@ -16,9 +20,11 @@ class Tag(models.Model):
 
 
 class Category(models.Model):
-    name = models.CharField(max_length=80, unique=True)
+    owner = models.ForeignKey(OWNER, on_delete=models.CASCADE, related_name="+")
+    name = models.CharField(max_length=80)
 
     class Meta:
+        unique_together = ("owner", "name")
         ordering = ["name"]
         verbose_name_plural = "categories"
 
@@ -29,6 +35,7 @@ class Category(models.Model):
 class Book(models.Model):
     STATUS = [("want", "Want to Read"), ("reading", "Currently Reading"), ("completed", "Completed"),
               ("hold", "On Hold"), ("dropped", "Dropped")]
+    owner = models.ForeignKey(OWNER, on_delete=models.CASCADE, related_name="+")
     title = models.CharField(max_length=250)
     author = models.CharField(max_length=200, blank=True)
     genre = models.CharField(max_length=100, blank=True)
@@ -50,6 +57,7 @@ class Book(models.Model):
 
 
 class Memory(models.Model):
+    owner = models.ForeignKey(OWNER, on_delete=models.CASCADE, related_name="+")
     book = models.ForeignKey(Book, null=True, blank=True, on_delete=models.SET_NULL, related_name="memories")
     category = models.ForeignKey(Category, null=True, blank=True, on_delete=models.SET_NULL, related_name="memories")
     dialogue_enc = models.BinaryField(blank=True, default=b"")   # AES-256-GCM ciphertext

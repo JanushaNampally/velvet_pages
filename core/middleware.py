@@ -1,9 +1,7 @@
 from django.conf import settings
 from django.shortcuts import redirect
 
-PUBLIC = {"/login/", "/verify/", "/setup/", "/forgot/", "/reset/"}
-
-
+PUBLIC = {"/login/", "/setup/", "/setup/details/", "/auth/google/start/", "/auth/google/callback/"}
 class OwnerOnlyMiddleware:
     """Everything except the login pages requires the owner to be logged in."""
 

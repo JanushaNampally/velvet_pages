@@ -1,17 +1,19 @@
 import hmac
+import secrets
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login, logout
-from django.core.cache import cache
+from django.db import IntegrityError, transaction
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
 
 from core.seed import seed_defaults
 
-from .forms import CodeForm, ForgotForm, LoginForm, ResetForm, SetupForm
+from . import google
+from .forms import LoginForm, SetupForm
 from .models import Owner
-from .otp import hit, issue_otp, normalize_phone, verify_otp
+from .throttle import hit
 
 BACKEND = "django.contrib.auth.backends.ModelBackend"
 
@@ -22,45 +24,107 @@ def _ip(request):
 
 def _find_owner(identifier):
     identifier = (identifier or "").strip()
+    if not identifier:
+        return None
     if "@" in identifier:
         return Owner.objects.filter(email__iexact=identifier).first()
-    phone = normalize_phone(identifier)
-    return Owner.objects.filter(phone=phone).first() if phone else None
+    return Owner.objects.filter(username__iexact=identifier).first()
 
 
-def _dev_code(phone):
-    if settings.DEBUG and settings.OTP_BACKEND == "console":
-        return cache.get(f"devcode:{phone}")      # dev convenience only; never shown when DEBUG=0
-    return None
-
-
+# ---------------------------------------------------------------- registration
 def setup_view(request):
-    """One-time owner creation in the browser. Closed forever once an owner exists."""
-    if Owner.objects.exists():
-        return redirect("login")
-    token_needed = bool(settings.SETUP_TOKEN)
-    form = SetupForm(request.POST or None, require_token=token_needed)
+    """Registration step 1: continue with Google. Open to anyone with a Google account."""
+    if request.user.is_authenticated:
+        return redirect("dashboard")
+    return render(request, "auth/setup.html", {"google_ready": google.is_configured()})
+
+
+def setup_details_view(request):
+    """Registration step 2: username, date of birth, password. Then go to login."""
+    if request.user.is_authenticated:
+        return redirect("dashboard")
+    ident = request.session.get("google_identity")
+    if not ident:
+        return redirect("setup")
+    invite_needed = bool(settings.SETUP_TOKEN)
+    form = SetupForm(request.POST or None, require_token=invite_needed)
     if request.method == "POST" and form.is_valid():
         d = form.cleaned_data
-        phone = normalize_phone(d["phone"])
-        if not phone:
-            form.add_error("phone", "Enter a valid phone number.")
-        elif token_needed and not hmac.compare_digest(d["setup_token"], settings.SETUP_TOKEN):
-            form.add_error("setup_token", "Wrong setup token.")
+        if hit(f"register:{_ip(request)}", 10, 3600):
+            form.add_error(None, "Too many attempts. Try again later.")
+        elif invite_needed and not hmac.compare_digest(d["setup_token"].encode(), settings.SETUP_TOKEN.encode()):
+            form.add_error("setup_token", "Wrong invite code.")
         else:
-            owner = Owner(email=d["email"].lower(), phone=phone, display_name=d["display_name"])
+            owner = Owner(username=d["username"], email=ident["email"], google_sub=ident["sub"],
+                          date_of_birth=d["date_of_birth"])
             owner.set_password(d["password"])
-            owner.save()
-            seed_defaults()
-            login(request, owner, backend=BACKEND)
-            messages.success(request, "Welcome to Velvet Pages.")
-            return redirect("dashboard")
-    return render(request, "auth/setup.html", {"form": form})
+            try:
+                with transaction.atomic():
+                    owner.save()
+            except IntegrityError:
+                form.add_error("username", "That username is taken. Try another.")
+            else:
+                seed_defaults(owner)
+                request.session.pop("google_identity", None)
+                messages.success(request, "Account created. Please log in.")
+                return redirect("login")
+    return render(request, "auth/setup_details.html", {"form": form, "email": ident["email"]})
 
 
-def login_view(request):
-    if not Owner.objects.exists():
+# ---------------------------------------------------------------- Google
+def google_start(request):
+    mode = "register" if request.GET.get("mode") == "register" else "login"
+    back = "setup" if mode == "register" else "login"
+    if not google.is_configured():
+        messages.error(request, "Google sign-in is not configured yet (set GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET).")
+        return redirect(back)
+    state = secrets.token_urlsafe(32)
+    request.session["google_state"] = state
+    request.session["google_mode"] = mode
+    return redirect(google.authorize_url(state))
+
+
+def google_callback(request):
+    state = request.session.pop("google_state", "")
+    mode = request.session.pop("google_mode", "login")
+    back = "setup" if mode == "register" else "login"
+    if request.GET.get("error"):
+        messages.error(request, "Google sign-in was cancelled.")
+        return redirect(back)
+    code = request.GET.get("code", "")
+    if not state or not code or not hmac.compare_digest(state.encode(), request.GET.get("state", "").encode()):
+        messages.error(request, "Sign-in session expired. Please try again.")
+        return redirect(back)
+    if hit(f"google-cb:{_ip(request)}", 20, 900):
+        messages.error(request, "Too many attempts. Wait a few minutes.")
+        return redirect(back)
+    try:
+        ident = google.get_identity(code)
+    except Exception:
+        messages.error(request, "Could not complete sign-in with Google. Please try again.")
+        return redirect(back)
+    if not ident["verified"] or not ident["email"]:
+        messages.error(request, "Your Google email is not verified.")
+        return redirect(back)
+
+    existing = Owner.objects.filter(google_sub=ident["sub"]).first() or Owner.objects.filter(email=ident["email"]).first()
+    if mode == "register":
+        if existing:
+            messages.info(request, "That Google account already has an account. Please log in.")
+            return redirect("login")
+        request.session["google_identity"] = {"sub": ident["sub"], "email": ident["email"]}
+        return redirect("setup_details")
+
+    if not existing or existing.google_sub != ident["sub"]:
+        messages.error(request, "No account for that Google account yet. Create one first.")
         return redirect("setup")
+    login(request, existing, backend=BACKEND)
+    request.session["auth_via"] = "google"
+    return redirect("dashboard")
+
+
+# ---------------------------------------------------------------- login / logout
+def login_view(request):
     if request.user.is_authenticated:
         return redirect("dashboard")
     form = LoginForm(request.POST or None)
@@ -70,66 +134,11 @@ def login_view(request):
         else:
             owner = _find_owner(form.cleaned_data["identifier"])
             if owner and owner.check_password(form.cleaned_data["password"]):
-                if not settings.REQUIRE_OTP:
-                    login(request, owner, backend=BACKEND)
-                    return redirect("dashboard")
-                if issue_otp(owner.phone, _ip(request)):
-                    request.session["pending_owner"] = owner.pk
-                    messages.info(request, "We sent a 6-digit code to your phone.")
-                    return redirect("verify")
-                form.add_error(None, "Too many codes requested. Try again in an hour.")
-            else:
-                form.add_error(None, "Wrong email/phone or password.")
-    return render(request, "auth/login.html", {"form": form})
-
-
-def verify_view(request):
-    owner = Owner.objects.filter(pk=request.session.get("pending_owner")).first()
-    if not owner:
-        return redirect("login")
-    form = CodeForm(request.POST or None)
-    if request.method == "POST" and form.is_valid():
-        if hit(f"verify-ip:{_ip(request)}", 20, 3600):
-            form.add_error(None, "Too many attempts. Try again later.")
-        elif verify_otp(owner.phone, form.cleaned_data["code"]):
-            request.session.pop("pending_owner", None)
-            login(request, owner, backend=BACKEND)
-            return redirect("dashboard")
-        else:
-            form.add_error(None, "Invalid or expired code.")
-    return render(request, "auth/verify.html", {
-        "form": form, "phone_hint": "•••••" + owner.phone[-3:], "dev_code": _dev_code(owner.phone)})
-
-
-def forgot_view(request):
-    form = ForgotForm(request.POST or None)
-    if request.method == "POST" and form.is_valid():
-        owner = _find_owner(form.cleaned_data["identifier"])
-        if owner:
-            issue_otp(owner.phone, _ip(request))
-        request.session["reset_owner"] = owner.pk if owner else 0
-        messages.info(request, "If that account exists, a code has been sent to its phone.")
-        return redirect("reset")
-    return render(request, "auth/forgot.html", {"form": form})
-
-
-def reset_view(request):
-    owner = Owner.objects.filter(pk=request.session.get("reset_owner")).first()
-    if not owner:
-        return redirect("forgot")
-    form = ResetForm(request.POST or None)
-    if request.method == "POST" and form.is_valid():
-        if hit(f"reset-ip:{_ip(request)}", 10, 3600):
-            form.add_error(None, "Too many attempts. Try again later.")
-        elif verify_otp(owner.phone, form.cleaned_data["code"]):
-            owner.set_password(form.cleaned_data["new_password"])
-            owner.save(update_fields=["password"])
-            request.session.pop("reset_owner", None)
-            messages.success(request, "Password changed. Please log in.")
-            return redirect("login")
-        else:
-            form.add_error("code", "Invalid or expired code.")
-    return render(request, "auth/reset.html", {"form": form, "dev_code": _dev_code(owner.phone)})
+                login(request, owner, backend=BACKEND)
+                request.session["auth_via"] = "password"
+                return redirect("dashboard")
+            form.add_error(None, "Wrong username/email or password.")
+    return render(request, "auth/login.html", {"form": form, "google_ready": google.is_configured()})
 
 
 @require_POST
